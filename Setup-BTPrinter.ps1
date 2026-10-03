@@ -36,7 +36,7 @@ Write-Host "Success: Bluetooth Printer found on $portName" -ForegroundColor Gree
 # 4. Install Driver Silently
 if (Test-Path $DriverExe) {
     Write-Host "`n[2/3] Installing Printer Driver (Please wait)..." -ForegroundColor Yellow
-    $installProcess = Start-Process -FilePath $DriverExe -ArgumentList "/S" -Wait -PassThru
+    $installProcess = Start-Process -FilePath $DriverExe -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait -PassThru
     Write-Host "Driver Installation process finished." -ForegroundColor Green
 } else {
     Write-Host "Error: $DriverExe not found!" -ForegroundColor Red
