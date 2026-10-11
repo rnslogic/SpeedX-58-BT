@@ -20,17 +20,31 @@ $DriverExe = Join-Path -Path $ScriptDir -ChildPath "POS-58-Series.exe"
 
 # 3. Search for Bluetooth COM Port
 Write-Host "`n[1/3] Searching for Bluetooth Printer COM Port..." -ForegroundColor Yellow
-$btDevice = Get-WmiObject Win32_PnPEntity | Where-Object { $_.Name -match "Standard Serial over Bluetooth link \(COM(\d+)\)" }
+$btDevice = Get-WmiObject Win32_PnPEntity | Where-Object { 
+    ($_.Name -match "Standard Serial over Bluetooth link \(COM(\d+)\)") -or
+    ($_.Name -match "Bluetooth" -and $_.Name -match "\(COM\d+\)")
+}
 
 if (-not $btDevice) {
     Write-Host "Error: No Bluetooth Printer found!" -ForegroundColor Red
-    Write-Host "Please pair the printer in Windows Bluetooth Settings first (Password: 1234)." -ForegroundColor Red
-    Start-Sleep -Seconds 5
+    Write-Host "Please pair the printer in Windows Bluetooth Settings first (Password: 1234 or 0000)." -ForegroundColor Red
+    Write-Host "Also ensure Bluetooth Printer > Properties > Services has 'Serial Port (SPP)' enabled." -ForegroundColor Red
+    Start-Sleep -Seconds 7
     exit
 }
 
 # Extract COM Port Name
-$portName = [regex]::Match($btDevice.Name, 'COM\d+').Value
+$portName = ""
+if ($btDevice -is [array]) {
+    $ports = @()
+    foreach ($dev in $btDevice) {
+        if ($dev.Name -match 'COM\d+') { $ports += $matches[0] }
+    }
+    $portName = $ports[-1]
+    Write-Host "Detected Bluetooth Ports: $($ports -join ', '). Selected: $portName" -ForegroundColor Cyan
+} else {
+    $portName = [regex]::Match($btDevice.Name, 'COM\d+').Value
+}
 Write-Host "Success: Bluetooth Printer found on $portName" -ForegroundColor Green
 
 # 4. Install Driver Silently
